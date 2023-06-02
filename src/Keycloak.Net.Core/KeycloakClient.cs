@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http;
 using Flurl;
 using Flurl.Http;
 using Flurl.Http.Configuration;
@@ -22,11 +23,16 @@ namespace Keycloak.Net
         private readonly string _clientSecret;
         private readonly Func<string> _getToken;
         private readonly KeycloakOptions _options;
+        private readonly ConfigurableHttpClientFactory _clientFactory;
 
         private KeycloakClient(string url, KeycloakOptions options)
         {
             _url = url;
             _options = options ?? new KeycloakOptions();
+
+            this._clientFactory = new ConfigurableHttpClientFactory();
+            FlurlHttp.ConfigureClient(this._url,
+                cli => cli.Settings.HttpClientFactory = this._clientFactory);
         }
 
         public KeycloakClient(string url, string userName, string password, KeycloakOptions options = null) 
@@ -51,6 +57,11 @@ namespace Keycloak.Net
         public void SetSerializer(ISerializer serializer)
         {
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+        }
+
+        public void SetHttpClientHandler(HttpClientHandler clientHandler)
+        {
+            this._clientFactory.SetHttpClientHandler(clientHandler);
         }
 
         private IFlurlRequest GetBaseUrl(string authenticationRealm) => new Url(_url)
