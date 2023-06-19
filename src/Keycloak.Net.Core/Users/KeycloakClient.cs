@@ -28,7 +28,9 @@ namespace Keycloak.Net
 		public async Task<string> CreateAndRetrieveUserIdAsync(string realm, User user, CancellationToken cancellationToken = default)
 		{
 			var response = await InternalCreateUserAsync(realm, user, cancellationToken).ConfigureAwait(false);
-			string locationPathAndQuery = response.Headers.Location.PathAndQuery;
+			string locationPathAndQuery = response.Headers.Location.IsAbsoluteUri
+										? response.Headers.Location.PathAndQuery
+										: response.Headers.Location.OriginalString;
 			string userId = response.IsSuccessStatusCode ? locationPathAndQuery.Substring(locationPathAndQuery.LastIndexOf("/", StringComparison.Ordinal) + 1) : null;
 			return userId;
 		}
