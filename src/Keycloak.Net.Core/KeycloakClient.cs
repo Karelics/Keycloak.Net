@@ -1,20 +1,18 @@
 ﻿using System;
 using System.Net.Http;
+using System.Text.Json;
 using Flurl;
-using Flurl.Http;
 using Flurl.Http.Configuration;
 using Keycloak.Net.Common.Extensions;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
-namespace Keycloak.Net
-{
+namespace Keycloak.Net;
+
     public partial class KeycloakClient
     {
-        private ISerializer _serializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings
+	private ISerializer _serializer = new DefaultJsonSerializer(new()
         {
-            ContractResolver = new CamelCasePropertyNamesContractResolver(),
-            NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore
+																	PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+																	DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         });
 
         private readonly Url _url;
@@ -23,51 +21,57 @@ namespace Keycloak.Net
         private readonly string _clientSecret;
         private readonly Func<string> _getToken;
         private readonly KeycloakOptions _options;
-        private readonly ConfigurableHttpClientFactory _clientFactory;
+
 
         private KeycloakClient(string url, KeycloakOptions options)
         {
             _url = url;
             _options = options ?? new KeycloakOptions();
-
-            this._clientFactory = new ConfigurableHttpClientFactory();
-            FlurlHttp.ConfigureClient(this._url,
-                cli => cli.Settings.HttpClientFactory = this._clientFactory);
         }
 
-        public KeycloakClient(string url, string userName, string password, KeycloakOptions options = null) 
-            : this(url, options)
+	public KeycloakClient(string url,
+						  string userName,
+						  string password,
+						  KeycloakOptions? options = null) : this(url, options)
         {
             _userName = userName;
             _password = password;
         }
 
-        public KeycloakClient(string url, string clientSecret, KeycloakOptions options = null)
-            : this(url, options)
+	public KeycloakClient(string url,
+						  string clientSecret,
+						  KeycloakOptions? options = null) : this(url, options)
         {
             _clientSecret = clientSecret;
         }
 
-        public KeycloakClient(string url, Func<string> getToken, KeycloakOptions options = null)
-            : this(url, options)
+	public KeycloakClient(string url,
+						  Func<string> getToken,
+						  KeycloakOptions? options = null) : this(url, options)
         {
             _getToken = getToken;
         }
 
-        public void SetSerializer(ISerializer serializer)
-        {
+	public void SetSerializer(ISerializer serializer) =>
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-        }
 
-        public void SetHttpClientHandler(HttpClientHandler clientHandler)
-        {
-            this._clientFactory.SetHttpClientHandler(clientHandler);
-        }
+    public void SetDefaultHeaders(IDictionary<string, string> headers)
+    {
+        FlurlHttp.Clients.WithDefaults(builder => builder.WithHeaders(headers));
+    }
 
-        private IFlurlRequest GetBaseUrl(string authenticationRealm) => new Url(_url)
-            .AppendPathSegment(_options.Prefix)
-            .ConfigureRequest(settings => settings.JsonSerializer = _serializer)
-            .WithAuthentication(_getToken, _url, authenticationRealm, _userName, _password, _clientSecret, _options);
+	private IFlurlRequest GetBaseUrl(string authenticationRealm) =>
+		new Url(_url).AppendPathSegment(_options.Prefix)
+					 .WithSettings(settings => settings.JsonSerializer = _serializer)
+					 .WithAuthentication(_getToken,
+										 _url,
+										 _options.AuthenticationRealm ?? authenticationRealm,
+										 _userName,
+										 _password,
+										 _clientSecret,
+										 _options);
+
+	internal record CountDto(int Count);
     }
 
     public class KeycloakOptions
@@ -75,10 +79,17 @@ namespace Keycloak.Net
         public string Prefix { get; }
         public string AdminClientId { get; }
 
-        public KeycloakOptions(string prefix = "", string adminClientId = "admin-cli")
+	/// <summary>
+	/// It is used only when the authorization realm differs from the target one
+	/// </summary>
+	public string AuthenticationRealm { get; }
+        
+	public KeycloakOptions(string prefix = "",
+						   string adminClientId = "admin-cli",
+						   string? authenticationRealm = default)
         {
             Prefix = prefix.TrimStart('/').TrimEnd('/');
             AdminClientId = adminClientId;
+		AuthenticationRealm = authenticationRealm;
         }
-    }
 }

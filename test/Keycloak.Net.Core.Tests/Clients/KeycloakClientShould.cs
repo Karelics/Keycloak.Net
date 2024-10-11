@@ -122,7 +122,7 @@ namespace Keycloak.Net.Tests
             }
         }
 
-        [Theory(Skip = "Not working yet")]
+        [Theory]
         [InlineData("Insurance", "insurance-product")]
         public async Task GetClientProviderAsync(string realm, string clientId)
         {
@@ -205,7 +205,7 @@ namespace Keycloak.Net.Tests
             }
         }
 
-        [Theory(Skip = "Not working yet")]
+        [Theory()]
         [InlineData("Insurance", "insurance-product")]
         public async Task GetUserForServiceAccountAsync(string realm, string clientId)
         {
@@ -261,8 +261,8 @@ namespace Keycloak.Net.Tests
         [InlineData("Insurance", "insurance-product")]
         public async Task GetResourcesOwnedByClientAsync(string realm, string clientId)
         {
-	        var result = await _client.GetResourcesOwnedByClientAsync(realm, clientId).ConfigureAwait(false);
-	        Assert.NotNull(result);
+            var result = await _client.GetResourcesOwnedByClientAsync(realm, clientId).ConfigureAwait(false);
+            Assert.NotNull(result);
         }
     }
 }

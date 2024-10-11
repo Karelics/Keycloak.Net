@@ -1,14 +1,10 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿namespace Keycloak.Net.Models.Root;
 
-namespace Keycloak.Net.Models.Root
+public class BuiltinProtocolMappers
 {
-    public class BuiltinProtocolMappers
-    {
-        [JsonProperty("saml")]
-        public List<Saml> Saml { get; set; }
+	[JsonPropertyName("saml")]
+	public List<Saml> Saml { get; set; }
 
-        [JsonProperty("openid-connect")]
-        public List<OpenIdConnect> OpenIdConnect { get; set; }
-    }
+	[JsonPropertyName("openid-connect")]
+	public List<OpenIdConnect> OpenIdConnect { get; set; }
 }
