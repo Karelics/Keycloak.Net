@@ -5,13 +5,37 @@ namespace Keycloak.Net.Common.Extensions;
 
 public static class FlurlRequestExtensions
 {
-	private static async Task<string> GetAccessTokenAsync(string url,
+    private static string GetCacheKey(string url, string realm, string userName, string adminClientId)
+    {
+        return $"password¦{url}¦{realm}¦{userName}¦{adminClientId}";
+    }
+
+    private static string GetCacheKey(string url, string realm, string adminClientId)
+    {
+        return $"client_credentials¦{url}¦{realm}¦{adminClientId}";
+    }
+
+    private static async Task<string> GetAccessTokenAsync(string url,
 														  string realm,
 														  string userName,
 														  string password,
 														  KeycloakOptions? options = null)
 	{
 		options ??= new();
+
+        var cacheKey = GetCacheKey(url, realm, userName, options.AdminClientId);
+        var canCache = options.AccessTokenCache != null;
+
+        if (canCache)
+        {
+            var cachedAccessToken = await options.AccessTokenCache!.GetFromCacheAsync(cacheKey, CancellationToken.None);
+
+            if (!string.IsNullOrEmpty(cachedAccessToken))
+            {
+                return cachedAccessToken;
+            }
+        }
+
 		var result = await url.AppendPathSegment($"{options.Prefix}/realms/{realm}/protocol/openid-connect/token")
 							  .WithHeader("Accept", "application/json")
 							  .PostUrlEncodedAsync(new List<KeyValuePair<string, string>>
@@ -23,6 +47,11 @@ public static class FlurlRequestExtensions
 												   })
 							  .ReceiveJson<AccessTokenDto>()
 							  .ConfigureAwait(false);
+
+        if (canCache)
+        {
+            await options.AccessTokenCache!.AddToCacheAsync(cacheKey, result.AccessToken, CancellationToken.None);
+        }
 
 		return result.AccessToken;
 	}
@@ -45,7 +74,21 @@ public static class FlurlRequestExtensions
 														  KeycloakOptions? options = null)
 	{
 		options ??= new();
-		var result = await url.AppendPathSegment($"{options.Prefix}/realms/{realm}/protocol/openid-connect/token")
+
+        var cacheKey = GetCacheKey(url, realm, options.AdminClientId);
+        var canCache = options.AccessTokenCache != null;
+
+        if (canCache)
+        {
+            var cachedAccessToken = await options.AccessTokenCache!.GetFromCacheAsync(cacheKey, CancellationToken.None);
+
+            if (!string.IsNullOrEmpty(cachedAccessToken))
+            {
+                return cachedAccessToken;
+            }
+        }
+
+        var result = await url.AppendPathSegment($"{options.Prefix}/realms/{realm}/protocol/openid-connect/token")
 							  .WithHeader("Content-Type", "application/x-www-form-urlencoded")
 							  .PostUrlEncodedAsync(new List<KeyValuePair<string, string>>
 												   {
@@ -56,7 +99,12 @@ public static class FlurlRequestExtensions
 							  .ReceiveJson<AccessTokenDto>()
 							  .ConfigureAwait(false);
 
-		return result.AccessToken;
+        if (canCache)
+        {
+            await options.AccessTokenCache!.AddToCacheAsync(cacheKey, result.AccessToken, CancellationToken.None);
+        }
+
+        return result.AccessToken;
 	}
 
 	private static string GetAccessToken(string url,
