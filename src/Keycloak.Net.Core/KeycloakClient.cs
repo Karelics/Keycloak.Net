@@ -3,6 +3,7 @@ using System.Text.Json;
 using Flurl;
 using Flurl.Http.Configuration;
 using Keycloak.Net.Common.Extensions;
+using Keycloak.Net.Core.Caching;
 
 namespace Keycloak.Net;
 
@@ -75,14 +76,21 @@ public class KeycloakOptions
 	/// <summary>
 	/// It is used only when the authorization realm differs from the target one
 	/// </summary>
-	public string AuthenticationRealm { get; }
-        
-	public KeycloakOptions(string prefix = "",
+	public string? AuthenticationRealm { get; }
+
+	/// <summary>
+	/// Specify a provider to cache access tokens for reuse.
+	/// </summary>
+    public IKeycloakAccessTokenCache? AccessTokenCache { get; }
+
+    public KeycloakOptions(string prefix = "",
 						   string adminClientId = "admin-cli",
-						   string? authenticationRealm = default)
+						   string? authenticationRealm = null,
+                           IKeycloakAccessTokenCache? accessTokenCache = null)
 	{
 		Prefix = prefix.TrimStart('/').TrimEnd('/');
 		AdminClientId = adminClientId;
 		AuthenticationRealm = authenticationRealm;
+		AccessTokenCache = accessTokenCache;
 	}
 }
