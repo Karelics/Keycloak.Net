@@ -1,5 +1,6 @@
 ﻿using Keycloak.Net.Models.Clients;
 using Keycloak.Net.Models.Groups;
+using Keycloak.Net.Models.IdentityProviders;
 using Keycloak.Net.Models.Users;
 
 namespace Keycloak.Net.Models.RealmsAdmin;
