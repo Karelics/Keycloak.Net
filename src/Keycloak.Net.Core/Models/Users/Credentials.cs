@@ -2,6 +2,8 @@
 
 public class Credentials
 {
+	[JsonPropertyName("id")]
+	public string Id { get; set; }
 	[JsonPropertyName("algorithm")]
 	public string Algorithm { get; set; }
 	[JsonPropertyName("config")]
@@ -16,8 +18,8 @@ public class Credentials
 	public int? Digits { get; set; }
 	[JsonPropertyName("hashIterations")]
 	public int? HashIterations { get; set; }
-	[JsonPropertyName("hashSaltedValue")]
-	public string HashSaltedValue { get; set; }
+	[JsonPropertyName("hashedSaltedValue")]
+	public string HashedSaltedValue { get; set; }
 	[JsonPropertyName("period")]
 	public int? Period { get; set; }
 	[JsonPropertyName("salt")]
