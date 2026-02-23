@@ -2,6 +2,7 @@
 using Keycloak.Net.Models.Clients;
 using Keycloak.Net.Models.ClientScopes;
 using Keycloak.Net.Models.Common;
+using Keycloak.Net.Models.ProtocolMappers;
 using Keycloak.Net.Models.Roles;
 using Keycloak.Net.Models.Users;
 using System;
@@ -424,5 +425,16 @@ public partial class KeycloakClient
             .PostUrlEncodedAsync(parameters, cancellationToken: cancellationToken)
             .ReceiveJson<Token>()
             .ConfigureAwait(false);
+    }
+
+    public async Task<bool> CreateClientProtocolMapperAsync(string realm,
+                                                      string clientId,
+                                                      ProtocolMapper protocolMapperRepresentation,
+                                                      CancellationToken cancellationToken = default)
+    {
+        var response = await GetBaseUrl(realm).AppendPathSegment($"/admin/realms/{realm}/clients/{clientId}/protocol-mappers/models")
+                                              .PostJsonAsync(protocolMapperRepresentation, cancellationToken: cancellationToken)
+                                              .ConfigureAwait(false);
+        return response.ResponseMessage.IsSuccessStatusCode;
     }
 }
